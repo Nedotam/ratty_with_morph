@@ -419,10 +419,16 @@ pub struct CursorModelConfig {
     pub scale_factor: f32,
     /// Horizontal model offset.
     pub x_offset: f32,
+    /// Vertical model offset.
+    pub y_offset: f32,
     /// Plane distance in 3D mode.
     pub plane_offset: f32,
     /// Cursor model brightness.
     pub brightness: f32,
+    /// Per-axis non-uniform base scale.
+    pub scale3: [f32; 3],
+    /// Base rotation in radians [pitch, yaw, roll].
+    pub rotation: [f32; 3],
     /// Cursor model base color.
     #[serde(deserialize_with = "deserialize_hex_color")]
     pub color: [u8; 3],
@@ -436,8 +442,11 @@ impl Default for CursorModelConfig {
             visible: true,
             scale_factor: 6.0,
             x_offset: 0.1,
+            y_offset: 0.0,
             plane_offset: 18.0,
             brightness: 1.0,
+            scale3: [1.0, 1.0, 1.0],
+            rotation: [-0.25, 0.0, 0.0],
             color: [255, 255, 255],
             path: PathBuf::from("CairoSpinyMouse.obj"),
         }
@@ -454,6 +463,10 @@ pub struct CursorAnimationConfig {
     pub bob_speed: f32,
     /// Bob amplitude.
     pub bob_amplitude: f32,
+    /// Enables squish/stretch morphing synced with bob animation.
+    pub morph_enabled: bool,
+    /// Morph strength from `0.0` to `1.0`.
+    pub morph_amplitude: f32,
 }
 
 impl Default for CursorAnimationConfig {
@@ -462,6 +475,8 @@ impl Default for CursorAnimationConfig {
             spin_speed: 1.4,
             bob_speed: 2.2,
             bob_amplitude: 0.08,
+            morph_enabled: false,
+            morph_amplitude: 0.3,
         }
     }
 }

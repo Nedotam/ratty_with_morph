@@ -12,12 +12,12 @@ use clap::Parser;
 use winit::platform::windows::{IconExtWindows, WindowExtWindows};
 use winit::window::Icon;
 
-use ratty::cli::Cli;
-use ratty::config::AppConfig;
-use ratty::paths::runtime_asset_root;
-use ratty::plugin::TerminalPlugin;
-use ratty::runtime::{RuntimeOptions, TerminalRuntime};
-use ratty::terminal::TerminalSurface;
+use toyotty::cli::Cli;
+use toyotty::config::AppConfig;
+use toyotty::paths::runtime_asset_root;
+use toyotty::plugin::TerminalPlugin;
+use toyotty::runtime::{RuntimeOptions, TerminalRuntime};
+use toyotty::terminal::TerminalSurface;
 
 /// Focused-window update interval for low-power winit mode.
 const FOCUSED_UPDATE_INTERVAL: Duration = Duration::from_millis(33);

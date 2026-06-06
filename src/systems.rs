@@ -830,20 +830,31 @@ pub(crate) fn sync_rgp_objects(mut params: RgpSyncParams) {
             anchor.style.rotation.y.to_radians(),
             anchor.style.rotation.z.to_radians(),
         );
-        let (spin, tilt, bob) = if anchor.style.animate {
+        let (spin, tilt, bob, morph_factor) = if anchor.style.animate {
+            let bob_raw = (elapsed_secs * app_config.cursor.animation.bob_speed).sin();
+            let mf = if app_config.cursor.animation.morph_enabled {
+                bob_raw * app_config.cursor.animation.morph_amplitude
+            } else {
+                0.0
+            };
             (
                 elapsed_secs * app_config.cursor.animation.spin_speed,
                 elapsed_secs * app_config.cursor.animation.spin_speed * 0.7,
-                (elapsed_secs * app_config.cursor.animation.bob_speed).sin()
-                    * cell_height
-                    * app_config.cursor.animation.bob_amplitude,
+                bob_raw * cell_height * app_config.cursor.animation.bob_amplitude,
+                mf,
             )
         } else {
-            (0.0, 0.0, 0.0)
+            (0.0, 0.0, 0.0, 0.0)
         };
         let animated_rotation = Quat::from_rotation_y(spin) * Quat::from_rotation_x(tilt);
         let object_rotation = base_oblique * explicit_rotation * animated_rotation;
-        let object_scale = Vec3::splat(scale) * scale3;
+        let object_scale = Vec3::splat(scale)
+            * scale3
+            * Vec3::new(
+                1.0 - morph_factor * 0.5,
+                1.0 + morph_factor,
+                1.0 - morph_factor * 0.5,
+            );
 
         match presentation.mode {
             TerminalPresentationMode::Flat2d => {
@@ -1275,7 +1286,7 @@ pub(crate) fn sync_asset_to_terminal_cursor(mut params: CursorSyncParams) {
     for (mut transform, mut visibility) in query.iter_mut() {
         transform.translation = translation;
         transform.rotation = rotation;
-        transform.scale = Vec3::splat(scale.max(0.001));
+        transform.scale = scale;
         *visibility = cursor_visibility;
     }
 }
@@ -1283,12 +1294,12 @@ pub(crate) fn sync_asset_to_terminal_cursor(mut params: CursorSyncParams) {
 fn cursor_pose(
     app_config: &AppConfig,
     ctx: &CursorPoseContext<'_, '_, '_>,
-) -> (Vec3, Quat, f32, Visibility) {
+) -> (Vec3, Quat, Vec3, Visibility) {
     let cols = ctx.terminal.cols.max(1) as f32;
     let rows = ctx.terminal.rows.max(1) as f32;
     let cell_width = ctx.viewport.size.x / cols;
     let cell_height = ctx.viewport.size.y / rows;
-    let scale = cell_width.min(cell_height) * app_config.cursor.model.scale_factor;
+    let base_scale = cell_width.min(cell_height) * app_config.cursor.model.scale_factor;
 
     let screen = ctx.runtime.parser.screen();
     let (cursor_row, cursor_col) = screen.cursor_position();
@@ -1297,22 +1308,36 @@ fn cursor_pose(
 
     let cursor_x = cursor_col + 0.5 + app_config.cursor.model.x_offset;
     let local_x = ctx.viewport.center.x - ctx.viewport.size.x * 0.5 + cursor_x * cell_width;
-    let local_y =
-        ctx.viewport.center.y + ctx.viewport.size.y * 0.5 - (cursor_row + 0.5) * cell_height;
+    let local_y = ctx.viewport.center.y + ctx.viewport.size.y * 0.5
+        - (cursor_row + 0.5) * cell_height
+        + app_config.cursor.model.y_offset * cell_height;
     let spin = ctx.elapsed_secs * app_config.cursor.animation.spin_speed;
-    let bob = (ctx.elapsed_secs * app_config.cursor.animation.bob_speed).sin()
-        * cell_height
-        * app_config.cursor.animation.bob_amplitude;
+    let bob_raw = (ctx.elapsed_secs * app_config.cursor.animation.bob_speed).sin();
+    let bob = bob_raw * cell_height * app_config.cursor.animation.bob_amplitude;
     let plane_bob = if ctx.viewport.size.y > 0.0 {
         bob / ctx.viewport.size.y
     } else {
         0.0
     };
 
+    let morph_factor = if app_config.cursor.animation.morph_enabled {
+        bob_raw * app_config.cursor.animation.morph_amplitude
+    } else {
+        0.0
+    };
+    let scale3 = app_config.cursor.model.scale3;
+    let rotation3 = app_config.cursor.model.rotation;
+    let mut scale = Vec3::new(
+        base_scale * scale3[0] * (1.0 - morph_factor * 0.5),
+        base_scale * scale3[1] * (1.0 + morph_factor),
+        base_scale * scale3[2] * (1.0 - morph_factor * 0.5),
+    );
+    scale = scale.max(Vec3::splat(0.001));
+
     let (translation, rotation, visibility) = match ctx.mode {
         TerminalPresentationMode::Flat2d => (
             Vec3::new(local_x, local_y + bob, CURSOR_DEPTH),
-            Quat::from_rotation_y(spin) * Quat::from_rotation_x(-0.25),
+            Quat::from_rotation_y(spin) * Quat::from_euler(EulerRot::ZYX, rotation3[2], rotation3[1], rotation3[0]),
             if !app_config.cursor.model.visible || screen.hide_cursor() {
                 Visibility::Hidden
             } else {
@@ -1337,7 +1362,7 @@ fn cursor_pose(
             (
                 plane_transform.transform_point(local_position),
                 plane_transform.rotation
-                    * (Quat::from_rotation_y(spin) * Quat::from_rotation_x(-0.25)),
+                    * (Quat::from_rotation_y(spin) * Quat::from_euler(EulerRot::ZYX, rotation3[2], rotation3[1], rotation3[0])),
                 if app_config.cursor.model.visible {
                     Visibility::Visible
                 } else {
