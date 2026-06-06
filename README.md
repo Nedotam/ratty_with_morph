@@ -6,9 +6,9 @@ Fork [orhun/ratty](https://github.com/orhun/ratty) into `this repo` - a cursor-f
 
 ### Why?
 I wanted to fixate the rotation, and the orientation of the cursor, so I can do very funny memes.
-![](update_media/front.mp4)
-![](update_media/side.mp4)
-![](update_media/drunk.mp4)
+![](update_media/front.gif)
+![](update_media/side.gif)
+![](update_media/drunk.gif)
 
 ## Install
 It was tested on `Arch(btw) 7.0.10`
