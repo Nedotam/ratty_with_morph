@@ -4,6 +4,20 @@
 ## About the fork
 Fork [orhun/ratty](https://github.com/orhun/ratty) into `this repo` - a cursor-focused terminal emulator with morph-mod squish/stretch animation and all upstream features intact.
 
+### Why?
+I wanted to fixate the rotation, and the orientation of the cursor, so I can do very funny memes.
+![](update_media/front.mp4)
+![](update_media/side.mp4)
+![](update_media/drunk.mp4)
+
+## Install
+It was tested on `Arch(btw) 7.0.10`
+
+```
+curl -L https://github.com/Nedotam/ratty_with_morph/releases/download/v0.4.1/ratty -o ratty_with_morph
+chmod +x ratty_with_morph
+./ratty_with_morph
+```
 ## Current State (morph-only branch)
 Clean fork from upstream with only morph-mod changes applied on top:
 
