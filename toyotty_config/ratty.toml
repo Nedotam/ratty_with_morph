@@ -1,0 +1,18 @@
+[cursor.model]
+path = "~/.config/ratty/models/bouncy_toyota_yaris.glb"
+scale_factor = 0.5
+brightness = 0.5
+x_offset = 2
+y_offset = 0.0
+plane_offset = 18.0
+visible = true
+scale3 = [1.0, 1.0, 1.0]
+rotation = [0.0, 0.45, 0.0]
+
+[cursor.animation]
+spin_speed = 0.00
+bob_speed = 7
+bob_amplitude = 0.2
+morph_enabled = true
+morph_amplitude = 0.2
+
